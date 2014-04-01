@@ -1,0 +1,17 @@
+{
+  "name": "rum",
+  "version": "0.2.0",
+  "description": "Rum enhances Blackcoffee with macro flavour",
+  "main": "rum.coffee",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Rolf Meyer",
+  "license": "MIT",
+  "dependencies": {
+    "blackcoffee": "^0.1.5"
+  }
+}
