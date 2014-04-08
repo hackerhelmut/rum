@@ -48,7 +48,6 @@ macro ->
         body = args[2]
       else
         console.error "define takes a maximum of 3 arguments"
-      console.log macro.file
       
       arg = []
       for dep in deps

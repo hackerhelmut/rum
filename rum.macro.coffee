@@ -76,8 +76,8 @@ macro ->
 # Load components
 macro ->
   @application.load "module.macro"
-  #@application.load "template.macro"
-  #@application.trigger 'load.end', []
+  @application.load "jade.macro"
+  @application.trigger 'load.end', []
 
 # The requirejs like define function
 macro module (args...) ->
