@@ -10,7 +10,7 @@ application.extend "module",
       inst: undefined
 
   use: (name) ->
-    if (module = @modules[name])?
+    if (module = @inline[name])?
       return module.inst ?= module.body (
         for dep in module.deps
           @use dep
@@ -22,19 +22,21 @@ application.extend "module",
         "is not included and no commonjs require is found."
 
 macro ->
+  application = @application
   @application.extend "module",
     inline: {}
+
     stub: macro.codeToNode ->
       application.module.add name, deps, body
 
     use: (file) ->
       if not @inline[file]?
-        result = macro.bcFileToNode file
+        result = application.load file
       return file
 
-    def: (args...) ->
+    def: (args) ->
       deps = []
-      body = undefined
+      body = macro.valToNode undefined
       if args.length == 1
         body = args[0]
       else if args.length == 2
@@ -46,6 +48,7 @@ macro ->
         body = args[2]
       else
         console.error "define takes a maximum of 3 arguments"
+      console.log macro.file
       
       arg = []
       for dep in deps
@@ -64,21 +67,24 @@ macro ->
           body: module.body
       code.push macro.csToNode "module = application.module.use \"#{app}\""
       code.push macro.csToNode "module?.exports = module"
-      return new macro.Block code
+      return code
 
   # bind on global events
-  @application.bind "application.begin", ->
+  @application.bind "application.begin", =>
     @application.module.def arguments
     @application.module.begin macro.file
 
-  @application.bind "library.begin", ->
-    @application.module.begin arguments
+  @application.bind "library.begin", =>
+    @application.module.def arguments
     @application.module.begin macro.file
 
-macro require (file) ->
+  @application.bind "module.begin", =>
+    @application.module.def arguments
+
+macro use (file) ->
   if typeof file == 'object'
     file = macro.nodeToVal file
   macro.csToNode "application.module.use \"#{@application.module.use file}\""
 
-
-
+macro define (args...) ->
+  macro.module args...

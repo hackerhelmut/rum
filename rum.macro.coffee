@@ -1,10 +1,14 @@
 # Declare rum runtime base instance
 application =
   extend: (object, properties) ->
+    name = undefined
     if typeof object == 'string'
-      object = application[object] or {}
+      name = object
+      object = application[name] or {}
     for key, val of properties
       object[key] = val
+    if name?
+      application[name] = object
     return object
 
 macro ->
@@ -12,23 +16,29 @@ macro ->
   @application =
     # to extend the base instance with macro modules
     extend: (object, properties) ->
+      name = undefined
       if typeof object == 'string'
-        object = application[object] or {}
+        name = object
+        object = @[name] or {}
       for key, val of properties
         object[key] = val
+      if name?
+        @[name] = object
       return object
 
     load: (filename, lang) ->
       fs = macro.require 'fs'
-      if not lang
+      if not lang?
         lang = 'coffee' if filename.match /\.coffee$/
         lang = 'js' if filename.match /\.js$/
         lang = 'json' if filename.match /\.json$/
+        if not lang?
+          lang = "coffee"
 
-      if fs.existsSync(filename)
+      if fs.existsSync filename
         filepath = filename
-      else if fs.exists("#{filename}.#{lang}")
-        filepath = "#{filename}+#{lang}"
+      else if fs.existsSync "#{filename}.#{lang}"
+        filepath = "#{filename}.#{lang}"
       else
         console.error "File not found: '#{filename}'"
         return macro.valToNode '{}'
@@ -45,6 +55,8 @@ macro ->
         code += "\nmacro ->"
         return macro.bcToNode code, filepath
 
+    callbacks: {}
+
     bind: (event, callback) ->
       @callbacks[event] ?= []
       @callbacks[event].push callback
@@ -54,27 +66,41 @@ macro ->
         @callbacks[event].splice @callbacks[event].indexOf(callback), 1
 
     trigger: (event, args) ->
-      if @callbacks[event]?
+      code = []
+      if @callbacks[event]? and @callbacks[event].length > 0
         for callback in @callbacks[event]
-          @callbacks[event] args...
+          for c in callback args...
+            code.push c
+      return code
 
 # Load components
 macro ->
   @application.load "module.macro"
-  @application.load "template.macro"
-  @application.trigger 'load.end', []
+  #@application.load "template.macro"
+  #@application.trigger 'load.end', []
 
 # The requirejs like define function
 macro module (args...) ->
-  @application.trigger 'module.begin', args
-  @application.trigger 'module.end', args
+  block = []
+  for code in @application.trigger 'module.begin', args
+    block.push code
+  for code in @application.trigger 'module.end', args
+    block.push code
+  return new macro.Block block
 
 macro library (args...) ->
-  @application.trigger 'library.begin', args
-  @application.trigger 'library.end', args
+  block = []
+  for code in @application.trigger 'library.begin', args
+    block.push code
+  for code in @application.trigger 'library.end', args
+    block.push code
+  return new macro.Block block
 
 macro application (args...) ->
-  code = []
-  @application.trigger 'application.begin', args
-  @application.trigger 'application.end', args
+  block = []
+  for code in @application.trigger 'application.begin', args
+    block.push code
+  for code in @application.trigger 'application.end', args
+    block.push code
+  return new macro.Block block
 
