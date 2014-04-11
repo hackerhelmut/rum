@@ -23,7 +23,7 @@ macro ->
       if @index.length != 0
         result = "compileTemplate\n"
         for name, template of @index
-          result+= "  \"#{name}\": '''\n#{template}\n'''\n"
+          result+= "  '#{name}': '''\n#{template}\n'''\n"
       return result
 
     compile: (templates) ->
