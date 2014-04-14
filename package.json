@@ -12,6 +12,7 @@
   "author": "Rolf Meyer",
   "license": "MIT",
   "dependencies": {
-    "blackcoffee": "^0.1.5"
+    "blackcoffee": "git+https://github.com/hackerhelmut/blackcoffee.git",
+    "jade": "^1.3.1"
   }
 }

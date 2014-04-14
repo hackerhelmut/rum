@@ -15,15 +15,26 @@ macro ->
     index: {}
     define: (template, options) ->
       name = "#{macro.file}:#{macro.line}"
+      application.trigger "application.template.define", name, template
       @index[name] = macro.nodeToVal template
       return macro.csToNode "application.template.index[\"#{name}\"]"
 
-    list: ->
+    list: (old) ->
       result = ""
-      if @index.length != 0
+      if Object.keys(@index).length != 0
         result = "compileTemplate\n"
         for name, template of @index
-          result+= "  '#{name}': '''\n#{template}\n'''\n"
+          if old[name]?
+            template = old[name]
+            delete old[name]
+          result += "  '#{name}': '''\n#{template.replace /^/gm, "    "}\n  '''\n"
+      if Object.keys(old).length != 0
+        result += "  # Old templates not found in the current build\n"
+        result += "  # Have a look at the templates they might just\n"
+        result += "  # have been moved.\n"
+
+        for name, template of old
+          result += "  '#{name}': '''\n#{template.replace /^/gm, "    "}\n  '''\n"
       return result
 
     compile: (templates) ->
@@ -33,9 +44,15 @@ macro ->
 
   @application.bind "application.end", =>
     fs = macro.require 'fs'
-    data = @application.template.list()
+    path = macro.require 'path'
     for name, file of flags
       if name == "template"
+        if fs.existsSync file
+          old = macro.nodeToVal application.load "test1.template.coffee", "coffee", ["."]
+        else
+          old = {}
+
+        data = @application.template.list old
         fs.writeFileSync(file, data)
     return []
 
@@ -43,7 +60,10 @@ macro defineTemplate (template) ->
   @application.template.define template
 
 macro compileTemplate (template) ->
-  @application.template.compile template
+  if not @application.mainfile?
+    @application.template.compile template
+  else
+    return template
 
 macro executeTemplate (template, options) ->
   @application.template.execute template, options

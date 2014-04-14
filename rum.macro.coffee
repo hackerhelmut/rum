@@ -13,6 +13,7 @@ application =
 
 macro ->
 # declare rum compiletime base instance
+  path = macro.require 'path'
   @application =
     # to extend the base instance with macro modules
     extend: (object, properties) ->
@@ -26,8 +27,11 @@ macro ->
         @[name] = object
       return object
 
-    load: (filename, lang) ->
+    path: [path.dirname(macro.file), '.']
+    load: (filename, lang, searchpath) ->
       fs = macro.require 'fs'
+      filepath = undefined
+      searchpath ?= @path
       if not lang?
         lang = 'coffee' if filename.match /\.coffee$/
         lang = 'js' if filename.match /\.js$/
@@ -35,12 +39,13 @@ macro ->
         if not lang?
           lang = "coffee"
 
-      if fs.existsSync filename
-        filepath = filename
-      else if fs.existsSync "#{filename}.#{lang}"
-        filepath = "#{filename}.#{lang}"
-      else
-        console.error "File not found: '#{filename}'"
+      for dir in searchpath
+        if fs.existsSync path.join dir, filename
+          filepath = path.join dir, filename
+        else if fs.existsSync path.join dir, "#{filename}.#{lang}"
+          filepath = path.join dir, "#{filename}.#{lang}"
+      if not filepath?
+        console.error "File not found: '#{filename}' in serach path:", searchpath
         return macro.valToNode '{}'
 
       code = fs.readFileSync filepath, 'utf8'
@@ -97,6 +102,7 @@ macro library (args...) ->
   return new macro.Block block
 
 macro application (args...) ->
+  @application.mainfile = macro.file
   block = []
   for code in @application.trigger 'application.begin', args
     block.push code
