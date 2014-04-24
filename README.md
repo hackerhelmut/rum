@@ -1,6 +1,8 @@
 Rum
 ===
 
+A blackcoffee macro set to enhance the flavour
+
 Rum is a macroset for blackcoffee to make your life easier.
 It extends coffeescript through backcoffee macros with the following abilities:
 
@@ -21,6 +23,9 @@ It extends coffeescript through backcoffee macros with the following abilities:
 
 
 blackcoffee rum applicationsugar => delicious
+
+The final Idea
+--------------
 
 For example in your main.coffee:
 
@@ -57,3 +62,11 @@ The template coffee file needs further compilation it will look like this:
         h1=title
         p=content
     """
+
+Implemented
+-----------
+
+   application ['dep1', 'dep2'], (dep1, dep2) ->
+     dep3 = use 'dep3'
+     ...
+
