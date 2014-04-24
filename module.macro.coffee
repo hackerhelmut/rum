@@ -22,6 +22,9 @@ application.extend "module",
         "is not included and no commonjs require is found."
 
 macro ->
+  get_name = (name) ->
+    return name.replace /(.coffee|.js)$/g, ""
+
   application = @application
   @application.extend "module",
     inline: {}
@@ -37,6 +40,7 @@ macro ->
     def: (args) ->
       deps = []
       body = macro.valToNode undefined
+      name = get_name macro.file
       if args.length == 1
         body = args[0]
       else if args.length == 2
@@ -53,9 +57,9 @@ macro ->
       for dep in deps
         arg.push @use dep
       
-      @inline[macro.file] ?= {}
-      @inline[macro.file].deps = arg
-      @inline[macro.file].body = body
+      @inline[name] ?= {}
+      @inline[name].deps = arg
+      @inline[name].body = body
 
     begin: (app) ->
       code = []
@@ -71,11 +75,11 @@ macro ->
   # bind on global events
   @application.bind "application.begin", =>
     @application.module.def arguments
-    @application.module.begin macro.file
+    @application.module.begin get_name macro.file
 
   @application.bind "library.begin", =>
     @application.module.def arguments
-    @application.module.begin macro.file
+    @application.module.begin get_name macro.file
 
   @application.bind "module.begin", =>
     @application.module.def arguments

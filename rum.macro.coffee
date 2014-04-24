@@ -80,9 +80,12 @@ macro ->
 
 # Load components
 macro ->
-  @application.load "module.macro"
-  @application.load "jade.macro"
-  @application.trigger 'load.end', []
+  block = []
+  block.push @application.load "module.macro"
+  #block.push @application.load "jade.macro"
+  for code in @application.trigger 'load.end', []
+    block.push code
+  return new macro.Block block
 
 # The requirejs like define function
 macro module (args...) ->
